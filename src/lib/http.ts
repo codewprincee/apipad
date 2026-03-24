@@ -1,4 +1,4 @@
-import type { ApiRequest, ApiResponse, KeyValuePair } from '@/types';
+import type { ApiRequest, ApiResponse } from '@/types';
 import { buildUrl } from './utils';
 
 export interface RequestExecutor {
@@ -23,43 +23,52 @@ export class FetchExecutor implements RequestExecutor {
       const encoded = btoa(`${request.auth.username}:${request.auth.password || ''}`);
       headers['Authorization'] = `Basic ${encoded}`;
     } else if (request.auth.type === 'apikey' && request.auth.key && request.auth.value) {
-      if (request.auth.addTo === 'query') {
-        // Will be handled in URL building
-      } else {
+      if (request.auth.addTo !== 'query') {
         headers[request.auth.key] = request.auth.value;
       }
     }
 
-    const init: RequestInit = {
-      method: request.method,
-      headers,
-    };
-
+    let requestBody: string | undefined;
     if (request.method !== 'GET' && request.method !== 'HEAD' && request.bodyType !== 'none' && request.body) {
-      init.body = request.body;
+      requestBody = request.body;
     }
 
     const start = performance.now();
 
     try {
-      const res = await fetch(url, init);
-      const time = performance.now() - start;
-
-      const body = await res.text();
-      const size = new TextEncoder().encode(body).length;
-
-      const responseHeaders: Record<string, string> = {};
-      res.headers.forEach((value, key) => {
-        responseHeaders[key] = value;
+      // Use server-side proxy to bypass CORS
+      const res = await fetch('/api/proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url,
+          method: request.method,
+          headers,
+          requestBody,
+        }),
       });
 
+      const data = await res.json();
+
+      // The proxy returns the upstream response data
+      if (data.error) {
+        return {
+          status: 0,
+          statusText: data.error,
+          headers: {},
+          body: `Error: ${data.error}`,
+          time: performance.now() - start,
+          size: 0,
+        };
+      }
+
       return {
-        status: res.status,
-        statusText: res.statusText,
-        headers: responseHeaders,
-        body,
-        time,
-        size,
+        status: data.status,
+        statusText: data.statusText,
+        headers: data.headers,
+        body: data.body,
+        time: data.time,
+        size: data.size,
       };
     } catch (err: any) {
       const time = performance.now() - start;
@@ -67,7 +76,7 @@ export class FetchExecutor implements RequestExecutor {
         status: 0,
         statusText: err.message || 'Network Error',
         headers: {},
-        body: `Error: ${err.message || 'Failed to fetch'}.\n\nThis may be caused by CORS restrictions. In the desktop app, requests bypass CORS.`,
+        body: `Error: ${err.message || 'Failed to fetch'}.\n\nCheck your connection and try again.`,
         time,
         size: 0,
       };
