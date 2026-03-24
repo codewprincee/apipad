@@ -52,9 +52,26 @@ export function Sidebar({
   onUpdateEnvironmentVariables,
 }: SidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>('collections');
+  const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <aside className={`flex flex-col w-64 border-r border-gray-200 bg-white shrink-0 ${open ? 'fixed inset-y-0 left-0 z-50 lg:relative' : 'hidden lg:flex'}`}>
+      {/* Search */}
+      <div className="px-2 py-2 border-b border-gray-100">
+        <div className="relative">
+          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search requests..."
+            className="w-full rounded-md border border-gray-200 bg-gray-50 pl-8 pr-3 py-1.5 text-xs text-gray-700 placeholder:text-gray-400 focus:border-indigo-300 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-200"
+          />
+        </div>
+      </div>
+
       {/* Tab bar */}
       <div className="flex border-b border-gray-200">
         {sidebarTabs.map((tab) => {
@@ -79,7 +96,22 @@ export function Sidebar({
       <div className="flex-1 overflow-hidden">
         {activeTab === 'collections' && (
           <CollectionTree
-            collections={collections}
+            collections={searchQuery ? collections.map((c) => ({
+              ...c,
+              requests: c.requests.filter((r) =>
+                r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                r.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                r.method.toLowerCase().includes(searchQuery.toLowerCase())
+              ),
+              folders: c.folders.map((f) => ({
+                ...f,
+                requests: f.requests.filter((r) =>
+                  r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  r.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  r.method.toLowerCase().includes(searchQuery.toLowerCase())
+                ),
+              })).filter((f) => f.requests.length > 0),
+            })).filter((c) => c.requests.length > 0 || c.folders.length > 0 || c.name.toLowerCase().includes(searchQuery.toLowerCase())) : collections}
             activeRequestId={activeRequestId}
             onSelectRequest={onSelectRequest}
             onAddRequest={onAddRequest}

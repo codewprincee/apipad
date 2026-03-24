@@ -14,6 +14,7 @@ import { RequestPanel } from '@/components/RequestPanel';
 import { ResponsePanel } from '@/components/ResponsePanel';
 import { EmptyState } from '@/components/EmptyState';
 import { ImportModal } from '@/components/ImportModal';
+import { CodeGenModal } from '@/components/CodeGenModal';
 import { ToastContainer } from '@/components/Toast';
 
 export default function Home() {
@@ -25,6 +26,8 @@ export default function Home() {
     addRequestToCollection,
     addFolderToCollection,
     updateRequest,
+    duplicateRequest,
+    exportCollections,
     importCollection,
   } = useCollections();
   const {
@@ -100,6 +103,7 @@ export default function Home() {
   );
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [codeGenOpen, setCodeGenOpen] = useState(false);
   const hasContent = activeRequest !== null;
 
   return (
@@ -108,6 +112,8 @@ export default function Home() {
         environments={environments}
         onSetActiveEnvironment={setActiveEnvironment}
         onImport={() => setImportOpen(true)}
+        onExport={exportCollections}
+        onCodeGen={activeRequest ? () => setCodeGenOpen(true) : undefined}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
       />
 
@@ -166,6 +172,14 @@ export default function Home() {
         onImport={handleImport}
         onToast={addToast}
       />
+
+      {activeRequest && (
+        <CodeGenModal
+          open={codeGenOpen}
+          onClose={() => setCodeGenOpen(false)}
+          request={activeRequest}
+        />
+      )}
 
       <ToastContainer toasts={toasts} onDismiss={removeToast} />
     </div>

@@ -1,9 +1,14 @@
 import type { ApiRequest, KeyValuePair } from '@/types';
+import { resolveDynamicVariables } from './dynamic-vars';
 
 export function interpolate(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (match, name) => {
+  // First resolve dynamic variables like {{$uuid}}, {{$timestamp}}
+  let result = resolveDynamicVariables(template);
+  // Then resolve environment variables like {{baseUrl}}
+  result = result.replace(/\{\{(\w+)\}\}/g, (match, name) => {
     return vars[name] !== undefined ? vars[name] : match;
   });
+  return result;
 }
 
 export function interpolateRequest(

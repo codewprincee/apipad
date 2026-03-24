@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { ApiCollection, ApiRequest, ApiFolder } from '@/types';
 import { useStorage } from './useStorage';
-import { createEmptyCollection, createEmptyRequest, createEmptyFolder } from '@/lib/utils';
+import { createEmptyCollection, createEmptyRequest, createEmptyFolder, generateId } from '@/lib/utils';
 
 export function useCollections() {
   const storage = useStorage();
@@ -114,6 +114,35 @@ export function useCollections() {
     [collections, persist]
   );
 
+  const duplicateRequest = useCallback(
+    (collectionId: string, requestId: string) => {
+      const col = collections.find((c) => c.id === collectionId);
+      if (!col) return null;
+      const original = col.requests.find((r) => r.id === requestId)
+        || col.folders.flatMap((f) => f.requests).find((r) => r.id === requestId);
+      if (!original) return null;
+      const dup: ApiRequest = { ...original, id: generateId(), name: `${original.name} (copy)` };
+      persist(
+        collections.map((c) =>
+          c.id === collectionId ? { ...c, requests: [...c.requests, dup] } : c
+        )
+      );
+      return dup;
+    },
+    [collections, persist]
+  );
+
+  const exportCollections = useCallback(() => {
+    const data = JSON.stringify(collections, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'apipad-collections.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [collections]);
+
   const importCollection = useCallback(
     (collection: ApiCollection) => {
       persist([...collections, collection]);
@@ -130,6 +159,8 @@ export function useCollections() {
     addFolderToCollection,
     updateRequest,
     deleteRequest,
+    duplicateRequest,
+    exportCollections,
     importCollection,
   };
 }

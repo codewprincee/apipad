@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import type { ApiCollection } from '@/types';
 import { importPostmanCollection } from '@/lib/import-postman';
 import { importInsomniaCollection } from '@/lib/import-insomnia';
+import { importOpenAPICollection } from '@/lib/import-openapi';
 
 interface ImportModalProps {
   open: boolean;
@@ -29,8 +30,11 @@ export function ImportModal({ open, onClose, onImport, onToast }: ImportModalPro
         } else if (data.resources) {
           collection = importInsomniaCollection(text);
           onToast(`Imported Insomnia collection: ${collection.name}`, 'success');
+        } else if (data.openapi || data.swagger || data.paths) {
+          collection = importOpenAPICollection(text);
+          onToast(`Imported OpenAPI spec: ${collection.name}`, 'success');
         } else {
-          onToast('Unrecognized file format. Expected Postman v2.1 or Insomnia v4.', 'error');
+          onToast('Unrecognized format. Supports Postman, Insomnia, and OpenAPI.', 'error');
           return;
         }
 
@@ -91,7 +95,7 @@ export function ImportModal({ open, onClose, onImport, onToast }: ImportModalPro
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
           </svg>
           <p className="mt-2 text-sm text-gray-600">Drop a JSON file here</p>
-          <p className="text-xs text-gray-400 mt-1">Supports Postman v2.1 and Insomnia v4 exports</p>
+          <p className="text-xs text-gray-400 mt-1">Supports Postman, Insomnia, and OpenAPI/Swagger</p>
 
           <label className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

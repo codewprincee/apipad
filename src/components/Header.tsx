@@ -6,10 +6,12 @@ interface HeaderProps {
   environments: ApiEnvironment[];
   onSetActiveEnvironment: (id: string) => void;
   onImport: () => void;
+  onExport?: () => void;
+  onCodeGen?: () => void;
   onToggleSidebar?: () => void;
 }
 
-export function Header({ environments, onSetActiveEnvironment, onImport, onToggleSidebar }: HeaderProps) {
+export function Header({ environments, onSetActiveEnvironment, onImport, onExport, onCodeGen, onToggleSidebar }: HeaderProps) {
   const active = environments.find((e) => e.isActive);
 
   return (
@@ -35,7 +37,7 @@ export function Header({ environments, onSetActiveEnvironment, onImport, onToggl
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {environments.length > 0 && (
           <select
             value={active?.id || ''}
@@ -49,6 +51,19 @@ export function Header({ environments, onSetActiveEnvironment, onImport, onToggl
           </select>
         )}
 
+        {onCodeGen && (
+          <button
+            onClick={onCodeGen}
+            className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            title="Generate code snippet"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+            </svg>
+            Code
+          </button>
+        )}
+
         <button
           onClick={onImport}
           className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
@@ -58,6 +73,19 @@ export function Header({ environments, onSetActiveEnvironment, onImport, onToggl
           </svg>
           Import
         </button>
+
+        {onExport && (
+          <button
+            onClick={onExport}
+            className="hidden sm:inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            title="Export all collections"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Export
+          </button>
+        )}
       </div>
     </header>
   );
